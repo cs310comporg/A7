@@ -1,0 +1,112 @@
+CHIP BoothMultiplier {
+
+    IN   initQ[16], initM[16], reset;
+    OUT  out[16], done;
+
+    PARTS:
+    // Implementation missing
+	//M Register
+	MRegister(in = initM , out = M , load = mRegLoad) ;
+	
+	//A Register
+	ARegister(in = newA , out[15] = aSign , out[1..15] = a115 , out[0] = a0 , out = answer , load = aRegLoad) ;
+	
+	//Q Register
+	QRegister(in = newQ , out[1..15] = Q115 , out[0] = Q0 , out[15] = Q15 , out = Q , load = qRegLoad) ;
+
+	//C Register
+	CRegister(in = newCount , out = count , load = cRegLoad) ;
+	
+	//Q_-1 bit
+	Bit(in = newQmin1 , out = Qmin1 , load = qmin1Load) ;
+	
+	//Adder
+	ALU(a = adderIn1 , b = adderIn2 , sub = sub, cout = overflow , out = addOutput) ;
+	
+	//Q value selector
+	Mux16(a = initQ , b[0..14] = Q115 , b[15] = Q15 , sel = setQ , out = newQ) ;
+	
+	//C value selector
+	Mux16(a[4..15] = false , a[3] = true , a[0..2] = false , b = addOutput , sel = setC , out = newCount) ;
+	
+	//Central State Comparison
+	Xor(a = Qmin1 , b = Q0 , out = shiftState) ;
+	Not(in = Q0 , out = notQ0) ;
+	Not(in = Qmin1 , out = notQmin1) ;
+	And(a = Q0 , b = notQmin1 , out = subState) ;
+	And(a = notQ0 , b = Qmin1 , out = addState) ;
+	
+	//Math States
+	Mux16(a = count , b = answer , sel = countOrAdd , out = adderIn1) ;
+	Mux16(a[0] = true , a[1..15] = false , b = M , sel = countOrAdd , out = adderIn2) ;
+	
+	Mux16(a = addOutput , b[15] = aSign , b[0..14] = a115  , sel = shiftOrAdd , out = newA) ;
+	
+	Mux(a = false , b = Q0 , sel = setQmin1 , out = newQmin1) ;
+	
+	//Check count state
+	Or16Way(in = count , out = temp) ;
+	Or(a = state0 , b = temp , out = continue) ;
+	
+	Not(in = continue , out = done , out = doneInternal) ;
+	
+	//Control Unit Logic
+	Bit(in = nsb0 , out = sb0 , load = continue) ;
+	Bit(in = nsb1 , out = sb1 , load = continue) ;
+	Bit(in = nsb2 , out = sb2 , load = continue) ;
+	
+	Bit(in = ns0 , out = nsb0 , load = continue) ;
+	Bit(in = ns1 , out = nsb1 , load = continue) ;
+	Bit(in = ns2 , out = nsb2 , load = continue) ;
+	
+	Not(in = sb0 , out = notS0) ;
+	Not(in = sb1 , out = notS1) ;
+	Not(in = sb2 , out = notS2) ;
+	
+	And(a = notS0 , b = notS1 , out = not0not1) ;
+	And(a = notS2 , b = not0not1 , out = state0) ;
+	
+	And(a = sb0 , b = notS1 , out = zeroNot1) ;
+	And(a = zeroNot1 , b = notS2 , out = state1) ;
+	
+	And(a = notS0 , b = sb1 , out = not0and1) ;
+	And(a = not0and1 , b = notS2 , out = state2) ;
+	
+	And(a = sb0 , b = sb1 , out = zeroAnd1) ;
+	And(a = zeroAnd1 , b = notS2 , out = state3) ;
+	
+	And(a = not0not1 , b = sb2 , out = state4) ;
+	
+	And(a = zeroNot1 , b = sb2 , out = state5) ;
+	
+	And(a = not0and1 , b = sb2 , out = state6) ;
+	
+	And(a = zeroAnd1 , b = sb2 , out = state7) ;
+	
+	Xor(a = state2 , b = addState , out = twoXorAdd) ;
+	And(a = state6 , b = continue , out = sixAndContinue) ;
+	Or16Way(in[0] = state0 , in[1] = twoXorAdd , in[2] = state3 , in[3] = state4 , in[4] = sixAndContinue , out = ns0) ;
+	
+	And(a = state2 , b = subState , out = twoAndSub) ;
+	Or16Way(in[0] = state1 , in[1] = twoAndSub , in[2] = state5 , in[3] = state6 , out = ns1) ;
+	
+	Not(in = subState , out = notSub) ;
+	And(a = state2 , b = notSub , out = twoAndNotSub) ;
+	And(a = state6 , b = doneInternal , out = sixAndDone) ;
+	Or(a = twoAndNotSub , b = sixAndDone , out = ns2) ;
+	
+	//Internal control unit
+	Mux8Way16(a = false ,
+			  b[0] = true , b[1] = false , b[2] = true , b[3] = true , b[4] = true , b[5] = false , b[6] = false , b[7] = false , b[8] = false , b[9] = false , b[10] = false , b[11..15] = false ,
+			  c[0] = false , c[1] = false , c[2] = false , c[3] = false , c[4] = false , c[5] = false , c[6] = false , c[7] = false , c[8] = false , c[9] = false , c[10] = false , c[11..15] = false ,
+			  d[0] = false , d[1] = true , d[2] = false , d[3] = false , d[4] = false , d[5] = true , d[6] = false , d[7] = false , d[8] = true , d[9] = false , d[10] = false , d[11..15] = false , 
+			  e[0] = false , e[1] = true , e[2] = false , e[3] = false , e[4] = false , e[5] = false , e[6] = false , e[7] = false , e[8] = true , e[9] = false , e[10] = false , e[11..15] = false ,
+			  f[0] = false , f[1] = true , f[2] = true , f[3] = true , f[4] = true , f[5] = true , f[6] = true , f[7] = true , f[8] = false , f[9] = false , f[10] = true , f[11..15] = false ,
+			  g = false ,
+			  h = false ,
+			  sel[0] = sb0 , sel[1] = sb1 , sel[2] = sb2 , 
+			  out[0] = mRegLoad , out[1] = aRegLoad , out[2] = qRegLoad , out[3] = cRegLoad , out[4] = qmin1Load , out[5] = sub , out[6] = setQ , out[7] = setC , out[8] = countOrAdd ,
+			  out[9] = shiftOrAdd , out[10] = setQmin1) ;
+	
+	
+}

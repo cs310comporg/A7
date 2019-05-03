@@ -1,0 +1,205 @@
+/**
+ * Mai Nou Yang & Nathan Moder
+ * 16-bit integer adder:  out = a + b, where a and b are 16-bit in 2's complement
+ * If cin = 1, then:      out = a - b
+ * cout is the final carry-out bit.
+ */
+CHIP Add16CLA {
+
+    IN  a[16], b[16], cin;
+    OUT out[16], cout;
+
+    PARTS:
+        //Select b if cin is 0, else negate b
+	    Not(in=b[0], out=notB0);
+        Mux(a=b[0], b=notB0, sel=cin, out=out0);
+        Not(in=b[1], out=notB1);
+        Mux(a=b[1], b=notB1, sel=cin, out=out1);
+        Not(in=b[2], out=notB2);
+        Mux(a=b[2], b=notB2, sel=cin, out=out2);
+        Not(in=b[3], out=notB3);
+        Mux(a=b[3], b=notB3, sel=cin, out=out3);
+        Not(in=b[4], out=notB4);
+        Mux(a=b[4], b=notB4, sel=cin, out=out4);
+        Not(in=b[5], out=notB5);
+        Mux(a=b[5], b=notB5, sel=cin, out=out5);
+        Not(in=b[6], out=notB6);
+        Mux(a=b[6], b=notB6, sel=cin, out=out6);
+        Not(in=b[7], out=notB7);
+        Mux(a=b[7], b=notB7, sel=cin, out=out7);
+        Not(in=b[8], out=notB8);
+        Mux(a=b[8], b=notB8, sel=cin, out=out8);
+        Not(in=b[9], out=notB9);
+        Mux(a=b[9], b=notB9, sel=cin, out=out9);
+        Not(in=b[10], out=notB10);
+        Mux(a=b[10], b=notB10, sel=cin, out=out10);
+        Not(in=b[11], out=notB11);
+        Mux(a=b[11], b=notB11, sel=cin, out=out11);
+        Not(in=b[12], out=notB12);
+        Mux(a=b[12], b=notB12, sel=cin, out=out12);
+        Not(in=b[13], out=notB13);
+        Mux(a=b[13], b=notB13, sel=cin, out=out13);
+        Not(in=b[14], out=notB14);
+        Mux(a=b[14], b=notB14, sel=cin, out=out14);
+        Not(in=b[15], out=notB15);
+        Mux(a=b[15], b=notB15, sel=cin, out=out15);
+
+
+		//P First Chunk
+		Or(a=a[0], b=out0, out=p00);
+		Or(a=a[1], b=out1, out=p01);
+		Or(a=a[2], b=out2, out=p02);
+		Or(a=a[3], b=out3, out=p03);
+		And(a=p00, b=p01, out=P00);
+		And(a=p02, b=p03, out=P01);
+		And(a=P00, b=P01, out=P0);
+
+		//P Second Chunk
+		Or(a=a[4], b=out4, out=p10);
+		Or(a=a[5], b=out5, out=p11);
+		Or(a=a[6], b=out6, out=p12);
+		Or(a=a[7], b=out7, out=p13);
+		And(a=p10, b=p11, out=P10);
+		And(a=p12, b=p13, out=P11);
+		And(a=P10, b=P11, out=P1);
+
+		//P Third Chunk
+		Or(a=a[8], b=out8, out=p20);
+		Or(a=a[9], b=out9, out=p21);
+		Or(a=a[10], b=out10, out=p22);
+		Or(a=a[11], b=out11, out=p23);
+		And(a=p20, b=p21, out=P20);
+		And(a=p22, b=p23, out=P21);
+		And(a=P20, b=P21, out=P2);
+
+		//P Fourth Chunk
+		Or(a=a[12], b=out12, out=p30);
+		Or(a=a[13], b=out13, out=p31);
+		Or(a=a[14], b=out14, out=p32);
+		Or(a=a[15], b=out15, out=p33);
+		And(a=p30, b=p31, out=P30);
+		And(a=p32, b=p33, out=P31);
+		And(a=P30, b=P31, out=P3);
+
+		//G First Chunk
+		And(a=a[0], b=out0, out=g00);
+		And(a=a[1], b=out1, out=g01);
+		And(a=a[2], b=out2, out=g02);
+		And(a=a[3], b=out3, out=g03);
+
+		And(a=p03, b=p02, out=p03Andp02);
+		And(a=p01, b=g00, out=p01Andg00);
+		And(a=p03Andp02, b=p01Andg00, out=g0out3);
+
+		And(a=p03Andp02, b=g01, out=g0out2);
+
+		And(a=p03, b=g02, out=g0out1);
+
+		Or(a=g03, b=g0out1, out=g0or1);
+		Or(a=g0out3, b=g0out2, out=g0or2);
+		Or(a=g0or1, b=g0or2, out=G0);
+
+
+		//G Second Chunk
+		And(a=a[4], b=out4, out=g10);
+		And(a=a[5], b=out5, out=g11);
+		And(a=a[6], b=out6, out=g12);
+		And(a=a[7], b=out7, out=g13);
+
+		And(a=p13, b=p12, out=p13Andp12);
+		And(a=p11, b=g10, out=p11Andg10);
+		And(a=p13Andp12, b=p11Andg10, out=g1out3);
+
+		And(a=p13Andp12, b=g11, out=g1out2);
+
+		And(a=p13, b=g12, out=g1out1);
+
+		Or(a=g13, b=g1out1, out=g1or1);
+		Or(a=g1out3, b=g1out2, out=g1or2);
+		Or(a=g1or1, b=g1or2, out=G1);
+
+		//G Third Chunk
+		And(a=a[8], b=out8, out=g20);
+		And(a=a[9], b=out9, out=g21);
+		And(a=a[10], b=out10, out=g22);
+		And(a=a[11], b=out11, out=g23);
+
+		And(a=p23, b=p22, out=p23Andp22);
+		And(a=p21, b=g20, out=p21Andg20);
+		And(a=p23Andp22, b=p21Andg20, out=g2out3);
+
+		And(a=p23Andp22, b=g21, out=g2out2);
+
+		And(a=p23, b=g22, out=g2out1);
+
+		Or(a=g23, b=g2out1, out=g2or1);
+		Or(a=g2out3, b=g2out2, out=g2or2);
+		Or(a=g2or1, b=g2or2, out=G2);
+
+		//G Fourth Chunk
+		And(a=a[12], b=out12, out=g30);
+		And(a=a[13], b=out13, out=g31);
+		And(a=a[14], b=out14, out=g32);
+		And(a=a[15], b=out15, out=g33);
+
+		And(a=p33, b=p32, out=p33Andp32);
+		And(a=p31, b=g30, out=p31Andg30);
+		And(a=p33Andp32, b=p31Andg30, out=g3out3);
+
+		And(a=p33Andp32, b=g31, out=g3out2);
+
+		And(a=p33, b=g32, out=g3out1);
+
+		Or(a=g33, b=g3out1, out=g3or1);
+		Or(a=g3out3, b=g3out2, out=g3or2);
+		Or(a=g3or1, b=g3or2, out=G3);
+
+		//C1
+		And(a=P0, b=cin, out=P0AndCin);
+		Or(a=G0, b=P0AndCin, out=C1);
+
+		//C2
+		And(a=P1, b=P0AndCin, out=P1AndP0AndCin);
+		And(a=P1, b=G0, out=P1AndG0);
+		Or(a=P1AndP0AndCin, b=P1AndG0, out=C2Temp1);
+		Or(a=G1, b=C2Temp1, out=C2);
+
+		//C3
+		And(a=P2, b=P1AndP0AndCin, out=P2P1P0CinAND);
+		And(a=P2, b=P1AndG0, out=P2AndP1AndG0);
+		And(a=P2, b=G1, out=P2AndG1);
+		Or(a=P2P1P0CinAND, b=P2AndP1AndG0, out=C3Temp1);
+		Or(a=G2, b=P2AndG1, out=C3Temp2);
+		Or(a=C3Temp1, b=C3Temp2, out=C3);
+
+		//C4 (cout)
+		And(a=P3, b=P2P1P0CinAND, out=P3210CinAND);
+		And(a=P3, b=P2AndP1AndG0, out=P3P2P1G0AND);
+		And(a=P3, b=P2AndG1, out=P3AndP2AndG1);
+		And(a=P3, b=G2, out=P3AndG2);
+		Or(a=G3, b=P3AndG2, out=C4Temp1);
+		Or(a=P3AndP2AndG1, b=P3P2P1G0AND, out=C4Temp2);
+		Or(a=P3210CinAND, b=C4Temp1, out=C4Temp3);
+		Or(a=C4Temp2, b=C4Temp3, out=C4);
+
+        //compute the addition
+        FullAdder(a=a[0], b=out0, c=cin, carry=c1, sum=out[0]);
+        FullAdder(a=a[1], b=out1, c=c1, carry=c2, sum=out[1]);
+        FullAdder(a=a[2], b=out2, c=c2, carry=c3, sum=out[2]);
+        FullAdder(a=a[3], b=out3, c=c3, carry=c4, sum=out[3]);
+
+		FullAdder(a=a[4], b=out4, c=C1, carry=c5, sum=out[4]);
+        FullAdder(a=a[5], b=out5, c=c5, carry=c6, sum=out[5]);
+        FullAdder(a=a[6], b=out6, c=c6, carry=c7, sum=out[6]);
+        FullAdder(a=a[7], b=out7, c=c7, carry=c8, sum=out[7]);
+
+		FullAdder(a=a[8], b=out8, c=C2, carry=c9, sum=out[8]);
+        FullAdder(a=a[9], b=out9, c=c9, carry=c10, sum=out[9]);
+        FullAdder(a=a[10], b=out10, c=c10, carry=c11, sum=out[10]);
+        FullAdder(a=a[11], b=out11, c=c11, carry=c12, sum=out[11]);
+
+		FullAdder(a=a[12], b=out12, c=C3, carry=c13, sum=out[12]);
+        FullAdder(a=a[13], b=out13, c=c13, carry=c14, sum=out[13]);
+        FullAdder(a=a[14], b=out14, c=c14, carry=c15, sum=out[14]);
+        FullAdder(a=a[15], b=out15, c=c15, carry=cout, sum=out[15]);
+}
