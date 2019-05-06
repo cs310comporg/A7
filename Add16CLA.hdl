@@ -44,7 +44,6 @@ CHIP Add16CLA {
         Not(in=b[15], out=notB15);
         Mux(a=b[15], b=notB15, sel=cin, out=out15);
 
-
 		//P First Chunk
 		Or(a=a[0], b=out0, out=p00);
 		Or(a=a[1], b=out1, out=p01);
@@ -92,7 +91,6 @@ CHIP Add16CLA {
 		And(a=p03Andp02, b=p01Andg00, out=g0out3);
 
 		And(a=p03Andp02, b=g01, out=g0out2);
-
 		And(a=p03, b=g02, out=g0out1);
 
 		Or(a=g03, b=g0out1, out=g0or1);
@@ -111,7 +109,6 @@ CHIP Add16CLA {
 		And(a=p13Andp12, b=p11Andg10, out=g1out3);
 
 		And(a=p13Andp12, b=g11, out=g1out2);
-
 		And(a=p13, b=g12, out=g1out1);
 
 		Or(a=g13, b=g1out1, out=g1or1);
@@ -129,7 +126,6 @@ CHIP Add16CLA {
 		And(a=p23Andp22, b=p21Andg20, out=g2out3);
 
 		And(a=p23Andp22, b=g21, out=g2out2);
-
 		And(a=p23, b=g22, out=g2out1);
 
 		Or(a=g23, b=g2out1, out=g2or1);
@@ -147,7 +143,6 @@ CHIP Add16CLA {
 		And(a=p33Andp32, b=p31Andg30, out=g3out3);
 
 		And(a=p33Andp32, b=g31, out=g3out2);
-
 		And(a=p33, b=g32, out=g3out1);
 
 		Or(a=g33, b=g3out1, out=g3or1);
@@ -180,7 +175,7 @@ CHIP Add16CLA {
 		Or(a=G3, b=P3AndG2, out=C4Temp1);
 		Or(a=P3AndP2AndG1, b=P3P2P1G0AND, out=C4Temp2);
 		Or(a=P3210CinAND, b=C4Temp1, out=C4Temp3);
-		Or(a=C4Temp2, b=C4Temp3, out=C4);
+		Or(a=C4Temp2, b=C4Temp3, out=cout);
 
         //compute the addition
         FullAdder(a=a[0], b=out0, c=cin, carry=c1, sum=out[0]);
@@ -201,5 +196,5 @@ CHIP Add16CLA {
 		FullAdder(a=a[12], b=out12, c=C3, carry=c13, sum=out[12]);
         FullAdder(a=a[13], b=out13, c=c13, carry=c14, sum=out[13]);
         FullAdder(a=a[14], b=out14, c=c14, carry=c15, sum=out[14]);
-        FullAdder(a=a[15], b=out15, c=c15, carry=cout, sum=out[15]);
+        FullAdder(a=a[15], b=out15, c=c15, carry=c16, sum=out[15]);
 }
