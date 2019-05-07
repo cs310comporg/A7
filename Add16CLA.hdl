@@ -7,7 +7,7 @@
 CHIP Add16CLA {
 
     IN  a[16], b[16], cin;
-    OUT out[16], cout;
+    OUT out[16], cout , finalCin;
 
     PARTS:
         //Select b if cin is 0, else negate b
@@ -195,6 +195,6 @@ CHIP Add16CLA {
 
 		FullAdder(a=a[12], b=out12, c=C3, carry=c13, sum=out[12]);
         FullAdder(a=a[13], b=out13, c=c13, carry=c14, sum=out[13]);
-        FullAdder(a=a[14], b=out14, c=c14, carry=c15, sum=out[14]);
+        FullAdder(a=a[14], b=out14, c=c14, carry=c15, carry = finalCin , sum=out[14]);
         FullAdder(a=a[15], b=out15, c=c15, carry=c16, sum=out[15]);
 }
