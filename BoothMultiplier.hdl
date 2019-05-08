@@ -1,3 +1,5 @@
+// Mai Nou & Nathan Moder
+
 CHIP BoothMultiplier {
 
     IN   initQ[16], initM[16], reset;
@@ -11,19 +13,19 @@ CHIP BoothMultiplier {
 	
 	//A Register
 	ARegister(in = Aval , out[1..15] = a115 , out = answer , load = aRegLoad) ;
-	Mux16(a = newA , b = false , out = Aval , sel = state0) ;
+	Mux16(a = newA , b = false , out = Aval , sel = reset) ;
 	
 	//Q Register
 	QRegister(in = Qval , out[1..15] = Q115 , out[0] = Q0 , out[15] = Q15 , load = qRegLoad) ;
-	Mux16(a = newQ , b = false , out = Qval , sel = state0) ;
+	Mux16(a = newQ , b = false , out = Qval , sel = reset) ;
 
 	//C Register
 	CRegister(in = Cval , out = count , out[0] = count0 , out[1] = count1 , out[2] = count2 , out[3] = count3 , load = cRegLoad) ;
-	Mux16(a = newCount , b = false , out = Cval , sel = state0) ;
+	Mux16(a = newCount , b = false , out = Cval , sel = reset) ;
 	
 	//Q_-1 bit
 	Bit(in = qmin1Val , out = Qmin1 , load = qmin1Load) ;
-	Mux(a = newQmin1 , b = false , out = qmin1Val , sel = state0) ;
+	Mux(a = newQmin1 , b = false , out = qmin1Val , sel = reset) ;
 	
 	//Adder
 	Add16CLA(a = adderIn1 , b = adderIn2 , cin = sub , cout = carryOut , finalCin = finalCin , out = addOutput , out[15] = addOutputSign) ;
@@ -59,7 +61,8 @@ CHIP BoothMultiplier {
 	Or(a = state0 , b = temp , out = continue) ;
 	Or(a = continue , b = reset , out = continueOrReset) ;
 	
-	Not(in = continue , out = done , out = doneInternal) ;
+	Not(in = continue , out = doneInternal) ;
+	And(a = doneInternal , b = state6 , out = done) ;
 	
 	//Control Unit Logic
 	Bit(in = ns0 , out = sb0 , load = continueOrReset) ;
