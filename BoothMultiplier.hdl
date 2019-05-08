@@ -6,19 +6,24 @@ CHIP BoothMultiplier {
     PARTS:
     // Implementation missing
 	//M Register
-	MRegister(in = initM , out[0] = M0 , out[1] = M1 , out[2] = M2 , out[3] = M3 , out[4] = M4 , out[5] = M5 , out[6] = M6 , out[7] = M7 , out[8] = M8 , load = mRegLoad) ;
+	MRegister(in = Mval , out[0] = M0 , out[1] = M1 , out[2] = M2 , out[3] = M3 , out[4] = M4 , out[5] = M5 , out[6] = M6 , out[7] = M7 , out[8] = M8 , load = mRegLoad) ;
+	Mux16(a = initM , b = false , out = Mval , sel = state0) ;
 	
 	//A Register
-	ARegister(in = newA , out[1..15] = a115 , out = answer , load = aRegLoad) ;
+	ARegister(in = Aval , out[1..15] = a115 , out = answer , load = aRegLoad) ;
+	Mux16(a = newA , b = false , out = Aval , sel = state0) ;
 	
 	//Q Register
-	QRegister(in = newQ , out[1..15] = Q115 , out[0] = Q0 , out[15] = Q15 , load = qRegLoad) ;
+	QRegister(in = Qval , out[1..15] = Q115 , out[0] = Q0 , out[15] = Q15 , load = qRegLoad) ;
+	Mux16(a = newQ , b = false , out = Qval , sel = state0) ;
 
 	//C Register
-	CRegister(in = newCount , out = count , load = cRegLoad) ;
+	CRegister(in = Cval , out = count , out[0] = count0 , out[1] = count1 , out[2] = count2 , out[3] = count3 , load = cRegLoad) ;
+	Mux16(a = newCount , b = false , out = Cval , sel = state0) ;
 	
 	//Q_-1 bit
-	Bit(in = newQmin1 , out = Qmin1 , load = qmin1Load) ;
+	Bit(in = qmin1Val , out = Qmin1 , load = qmin1Load) ;
+	Mux(a = newQmin1 , b = false , out = qmin1Val , sel = state0) ;
 	
 	//Adder
 	Add16CLA(a = adderIn1 , b = adderIn2 , cin = sub , cout = carryOut , finalCin = finalCin , out = addOutput , out[15] = addOutputSign) ;
@@ -50,15 +55,16 @@ CHIP BoothMultiplier {
 	Mux(a = false , b = Q0 , sel = setQmin1 , out = newQmin1) ;
 	
 	//Check count state
-	Or16Way(in = count , out = temp) ;
+	Or16Way(a = count0 , b = count1 , c = count2 , d = count3 , out = temp) ;
 	Or(a = state0 , b = temp , out = continue) ;
+	Or(a = continue , b = reset , out = continueOrReset) ;
 	
 	Not(in = continue , out = done , out = doneInternal) ;
 	
 	//Control Unit Logic
-	Bit(in = ns0 , out = sb0 , load = continue) ;
-	Bit(in = ns1 , out = sb1 , load = continue) ;
-	Bit(in = ns2 , out = sb2 , load = continue) ;
+	Bit(in = ns0 , out = sb0 , load = continueOrReset) ;
+	Bit(in = ns1 , out = sb1 , load = continueOrReset) ;
+	Bit(in = ns2 , out = sb2 , load = continueOrReset) ;
 	
 	Not(in = sb0 , out = notS0) ;
 	Not(in = sb1 , out = notS1) ;
@@ -84,23 +90,28 @@ CHIP BoothMultiplier {
 	
 	And(a = zeroAnd1 , b = sb2 , out = state7) ;
 	
+	And(a = state6 , b = reset , out = gotoState0) ;
+	Not(in = gotoState0 , out = dontGotoState0) ;
 	And(a = state2 , b = addState , out = state2AndAdd) ;
 	Xor(a = state2 , b = state2AndAdd , out = twoXorAdd) ;
 	And(a = state6 , b = doneInternal , out = sixAndDone) ;
-	Or16Way(in[0] = state0 , in[1] = twoXorAdd , in[2] = state3 , in[3] = state4 , in[4] = sixAndDone , out = ns0) ;
+	Or16Way(a = state0 , b = twoXorAdd , c = state3 , d = state4 , e = sixAndDone , out = nst0) ;
+	And(a = nst0 , b = dontGotoState0 , out = ns0) ;
 	
 	And(a = state2 , b = subState , out = twoAndSub) ;
-	Or16Way(in[0] = state1 , in[1] = twoAndSub , in[2] = state5 , in[3] = state6 , out = ns1) ;
+	Or16Way(a = state1 , b = twoAndSub , c = state5 , d = state6 , out = nst1) ;
+	And(a = nst1 , b = dontGotoState0 , out = ns1) ;
 	
 	Not(in = subState , out = notSub) ;
 	And(a = state2 , b = notSub , out = twoAndNotSub) ;
-	Or16Way(in[0] = twoAndNotSub , in[1] = sixAndDone , in[2] = state5 , in[3] = state4 , in[4] = state3 , out = ns2) ;
+	Or16Way(a = twoAndNotSub , b = sixAndDone , c = state5 , d = state4 , e = state3 , out = nst2) ;
+	And(a = nst2 , b = dontGotoState0 , out = ns2) ;
 	
 	//Output
 	Mux16(a = false , b = answer , sel = doneInternal , out = out) ;
 	
 	//Internal control unit
-	Mux8Way16(a = false ,
+	Mux8Way16(a[0] = true , a[1] = true , a[2] = true , a[3] = true , a[4] = true , a[5..15] = false ,
 			  b[0] = true , b[1] = false , b[2] = true , b[3] = true , b[4] = true , b[5] = false , b[6] = false , b[7] = false , b[8] = false , b[9] = false , b[10] = false , b[11..15] = false ,
 			  c[0] = false , c[1] = false , c[2] = false , c[3] = false , c[4] = false , c[5] = false , c[6] = false , c[7] = false , c[8] = false , c[9] = false , c[10] = false , c[11..15] = false ,
 			  d[0] = false , d[1] = true , d[2] = false , d[3] = false , d[4] = false , d[5] = true , d[6] = false , d[7] = false , d[8] = true , d[9] = false , d[10] = false , d[11] = true , d[12..15] = false , 
